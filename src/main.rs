@@ -1,5 +1,5 @@
 use femto_gpt::gpt::GPT;
-use femto_gpt::tokenizer::{SimpleTokenizer, Tokenizer};
+use femto_gpt::tokenizer::{SentencepieceTokenizer, SimpleTokenizer, Tokenizer};
 
 use std::fs;
 use std::io::Write;
@@ -10,11 +10,11 @@ fn main() {
     // Create a unique char-to-int mapping for all unique characters inside our dataset
     let dataset_char =
         fs::read_to_string("dataset.txt").expect("Should have been able to read the file");
-    let tokenizer = SimpleTokenizer::new(&dataset_char);
+    let tokenizer = SentencepieceTokenizer::new();
 
     let dataset = tokenizer.tokenize(&dataset_char);
 
-    let batch_size = 32;
+    let batch_size = 16;
 
     let num_tokens = 64;
     let vocab_size = tokenizer.vocab_size();
@@ -49,7 +49,7 @@ fn main() {
 
     // Generate 100 character with the currently trained model before
     // starting the training loop.
-    gpt.infer(&tokenizer.tokenize("\n"), 100, |ch| {
+    gpt.infer(&tokenizer.tokenize("hi "), 100, |ch| {
         print!("{}", tokenizer.untokenize(&[ch]));
         std::io::stdout().flush().unwrap();
     });
