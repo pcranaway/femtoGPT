@@ -56,7 +56,7 @@ fn main() {
         // starting the training loop.
         println!(
             "> {}",
-            tokenizer.untokenize(&gpt.infer(&tokenizer.tokenize("\n"), 80, |ch| {}))
+            tokenizer.untokenize(&gpt.infer(&tokenizer.tokenize("hi "), 80, |ch| {}))
         );
     }
 
