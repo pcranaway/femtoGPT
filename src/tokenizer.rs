@@ -101,7 +101,7 @@ impl Tokenizer for SentencepieceTokenizer {
         self.model
             .encode(string)
             .unwrap()
-            .into_iter()
+            .iter()
             .map(|p| p.id as usize)
             .collect()
     }
