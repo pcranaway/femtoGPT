@@ -98,13 +98,19 @@ impl Tokenizer for SentencepieceTokenizer {
         self.model.len()
     }
     fn tokenize(&self, string: &str) -> Vec<usize> {
-        self.model
-            .encode(string)
-            .unwrap()
-            .iter()
-            .map(|p| p.id as usize)
-            .collect()
+        // self.model
+        //     .encode(string)
+        //     .unwrap()
+        //     .iter()
+        //     .map(|p| p.id as usize)
+        //     .collect()
+
+        let tokens = self.model.encode(string).unwrap();
+        let mut result = Vec::with_capacity(tokens.len());
+        result.extend(tokens.iter().map(|p| p.id as usize));
+        result
     }
+
     fn untokenize(&self, tokens: &[usize]) -> String {
         let pieces: Vec<u32> = tokens.into_iter().map(|tkn| *tkn as u32).collect();
 
