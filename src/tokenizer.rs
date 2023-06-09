@@ -107,7 +107,9 @@ impl Tokenizer for SentencepieceTokenizer {
 
         let tokens = self.model.encode(string).unwrap();
         let mut result = Vec::with_capacity(tokens.len());
+
         result.extend(tokens.iter().map(|p| p.id as usize));
+
         result
     }
 
@@ -115,5 +117,54 @@ impl Tokenizer for SentencepieceTokenizer {
         let pieces: Vec<u32> = tokens.into_iter().map(|tkn| *tkn as u32).collect();
 
         self.model.decode_piece_ids(&pieces).unwrap()
+    }
+}
+
+pub struct HFTokenizer {
+    hf_tokenizer: tokenizers::Tokenizer,
+}
+
+impl HFTokenizer {
+    pub fn new(model: &str) -> Self {
+        Self {
+            hf_tokenizer: tokenizers::Tokenizer::from_pretrained(model, None).unwrap(),
+        }
+    }
+}
+
+impl Tokenizer for HFTokenizer {
+    fn vocab_size(&self) -> usize {
+        self.hf_tokenizer.get_vocab_size(true)
+    }
+
+    fn tokenize(&self, string: &str) -> Vec<usize> {
+        // encode
+        let encoded = self.hf_tokenizer.encode(string, true).unwrap();
+
+        let tokens = encoded.get_ids();
+        // or encoded.get_word_ids()
+        // not sure which one is correct
+
+        // convert result from HF tokenizers into usize vec instead of a u32 one, because for
+        // whatever reason that's what HF tokenizers gives us.
+        let mut result = Vec::with_capacity(tokens.len());
+
+        result.extend(tokens.iter().map(|p| *p as usize));
+
+        result
+    }
+
+    fn untokenize(&self, tokens: &[usize]) -> String {
+        dbg!(tokens);
+
+        // convert token IDs to u32 because HF tokenizers expect that for whatever reason
+        let mut ids = Vec::with_capacity(tokens.len());
+
+        ids.extend(tokens.iter().map(|p| *p as u32));
+
+        // actually decode
+        let decoded = self.hf_tokenizer.decode(ids, true).unwrap();
+
+        decoded
     }
 }
