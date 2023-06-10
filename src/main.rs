@@ -1,5 +1,7 @@
-use femto_gpt::gpt::GPT;
-use femto_gpt::tokenizer::{HFTokenizer, SentencepieceTokenizer, SimpleTokenizer, Tokenizer};
+use femto_gpt::{
+    gpt::GPT,
+    tokenizer::{SentencepieceTokenizer, Tokenizer},
+};
 
 use std::fs;
 
@@ -9,7 +11,6 @@ fn main() {
     // Create a unique char-to-int mapping for all unique characters inside our dataset
     let dataset_char =
         fs::read_to_string("dataset.txt").expect("Should have been able to read the file");
-    // let tokenizer = HFTokenizer::new("gpt2");
     let tokenizer = SentencepieceTokenizer::new();
 
     let dataset = tokenizer.tokenize(&dataset_char);
