@@ -3,8 +3,6 @@ use std::{
     hash::Hash,
 };
 
-use sentencepiece::SentencePieceProcessor;
-
 pub trait Tokenizer {
     fn vocab_size(&self) -> usize;
     fn tokenize(&self, string: &str) -> Vec<usize>;
@@ -81,42 +79,24 @@ impl Tokenizer for AsciiTokenizer {
     }
 }
 
-pub struct SentencepieceTokenizer {
-    model: SentencePieceProcessor,
-}
+pub struct SentencepieceTokenizer {}
 
 impl SentencepieceTokenizer {
     pub fn new() -> Self {
-        let model = SentencePieceProcessor::open("reddit.model").unwrap();
-
-        Self { model }
+        Self {}
     }
 }
 
 impl Tokenizer for SentencepieceTokenizer {
     fn vocab_size(&self) -> usize {
-        self.model.len()
+        todo!()
     }
     fn tokenize(&self, string: &str) -> Vec<usize> {
-        // self.model
-        //     .encode(string)
-        //     .unwrap()
-        //     .iter()
-        //     .map(|p| p.id as usize)
-        //     .collect()
-
-        let tokens = self.model.encode(string).unwrap();
-        let mut result = Vec::with_capacity(tokens.len());
-
-        result.extend(tokens.iter().map(|p| p.id as usize));
-
-        result
+        todo!()
     }
 
     fn untokenize(&self, tokens: &[usize]) -> String {
-        let pieces: Vec<u32> = tokens.into_iter().map(|tkn| *tkn as u32).collect();
-
-        self.model.decode_piece_ids(&pieces).unwrap()
+        todo!()
     }
 }
 
