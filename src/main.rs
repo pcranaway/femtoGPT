@@ -1,6 +1,6 @@
 use femto_gpt::{
     gpt::GPT,
-    tokenizer::{SentencepieceTokenizer, Tokenizer},
+    tokenizer::{sentencepiece::SentencePieceTokenizer, Tokenizer},
 };
 
 use std::fs;
@@ -11,7 +11,7 @@ fn main() {
     // Create a unique char-to-int mapping for all unique characters inside our dataset
     let dataset_char =
         fs::read_to_string("dataset.txt").expect("Should have been able to read the file");
-    let tokenizer = SentencepieceTokenizer::new();
+    let tokenizer = SentencePieceTokenizer::new("./reddit.model", "./reddit.vocab");
 
     let dataset = tokenizer.tokenize(&dataset_char);
 

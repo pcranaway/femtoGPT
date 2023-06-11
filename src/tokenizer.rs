@@ -76,23 +76,80 @@ impl Tokenizer for AsciiTokenizer {
     }
 }
 
-pub struct SentencepieceTokenizer {}
+pub mod sentencepiece {
+    //! Our in-house implementation of the Unigram SentencePiece tokenizer.
+    //! It's able to read SentencePiece-generated models and vocabularies.
 
-impl SentencepieceTokenizer {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
+    use std::{collections::HashMap, fs};
 
-impl Tokenizer for SentencepieceTokenizer {
-    fn vocab_size(&self) -> usize {
-        todo!()
-    }
-    fn tokenize(&self, string: &str) -> Vec<usize> {
-        todo!()
+    use super::Tokenizer;
+
+    pub struct SentencePieceTokenizer {
+        token_to_id: HashMap<String, usize>,
+        id_to_token: HashMap<usize, String>,
     }
 
-    fn untokenize(&self, tokens: &[usize]) -> String {
-        todo!()
+    impl SentencePieceTokenizer {
+        pub fn new(model_path: &str, vocab_path: &str) -> Self {
+            let _model = fs::read(model_path).expect("can't read model file");
+            let vocab = fs::read(vocab_path).expect("can't read vocab file");
+
+            let mut token_to_id: HashMap<String, usize> = HashMap::new();
+            let mut id_to_token: HashMap<usize, String> = HashMap::new();
+
+            let mut buffer: Vec<u8> = vec![];
+            let mut reading_token = true;
+
+            let mut id = 0;
+
+            for byte in vocab {
+                // tab character, now reading score
+                if byte == 09 {
+                    // from_utf8_lossy maybe?
+                    let token = std::str::from_utf8(&buffer).unwrap();
+
+                    // add to both mappings
+                    token_to_id.insert(token.to_string(), id);
+                    id_to_token.insert(id, token.to_string());
+
+                    id += 1;
+
+                    reading_token = false;
+                    buffer.clear();
+
+                    continue;
+                }
+
+                // newline, now reading next token
+                if byte == 0x0a {
+                    reading_token = true;
+                    buffer.clear();
+
+                    continue;
+                }
+
+                if reading_token {
+                    buffer.push(byte);
+                }
+            }
+
+            Self {
+                token_to_id,
+                id_to_token,
+            }
+        }
+    }
+
+    impl Tokenizer for SentencePieceTokenizer {
+        fn vocab_size(&self) -> usize {
+            todo!()
+        }
+        fn tokenize(&self, string: &str) -> Vec<usize> {
+            todo!()
+        }
+
+        fn untokenize(&self, tokens: &[usize]) -> String {
+            todo!()
+        }
     }
 }
