@@ -133,6 +133,8 @@ pub mod sentencepiece {
                 }
             }
 
+            assert_eq!(token_to_id.len(), id_to_token.len());
+
             Self {
                 token_to_id,
                 id_to_token,
@@ -142,8 +144,9 @@ pub mod sentencepiece {
 
     impl Tokenizer for SentencePieceTokenizer {
         fn vocab_size(&self) -> usize {
-            todo!()
+            self.token_to_id.len()
         }
+
         fn tokenize(&self, string: &str) -> Vec<usize> {
             todo!()
         }
