@@ -80,71 +80,75 @@ pub mod sentencepiece {
     //! Our in-house implementation of the Unigram SentencePiece tokenizer.
     //! It's able to read SentencePiece-generated models and vocabularies.
 
-    use std::{collections::HashMap, fs};
-
     use super::Tokenizer;
+    use std::{
+        collections::HashMap,
+        fs::File,
+        io::{BufRead, BufReader},
+    };
+
+    // VocabEntry::0 being the ID / index
+    // VocabEntry::1 being the score
+    type VocabEntry = (usize, f32);
+
+    struct VocabMap {
+        tokens: Vec<String>,
+        indices: HashMap<String, VocabEntry>,
+    }
+
+    impl VocabMap {
+        fn new() -> Self {
+            Self {
+                tokens: Vec::new(),
+                indices: HashMap::new(),
+            }
+        }
+
+        fn add_entry(&mut self, token: String, entry: VocabEntry) {
+            self.tokens.push(token.clone());
+            self.indices.insert(token.clone(), (entry.0, entry.1));
+        }
+
+        fn get_entry(&self, token: &str) -> Option<VocabEntry> {
+            self.indices.get(token).copied()
+        }
+
+        fn get_token(&self, id: usize) -> Option<&str> {
+            self.tokens.get(id).map(String::as_str)
+        }
+    }
 
     pub struct SentencePieceTokenizer {
-        token_to_id: HashMap<String, usize>,
-        id_to_token: HashMap<usize, String>,
+        vocab_map: VocabMap,
     }
 
     impl SentencePieceTokenizer {
-        pub fn new(model_path: &str, vocab_path: &str) -> Self {
-            let _model = fs::read(model_path).expect("can't read model file");
-            let vocab = fs::read(vocab_path).expect("can't read vocab file");
+        pub fn new(_model_path: &str, vocab_path: &str) -> Self {
+            // let _model = fs::read(model_path).expect("can't read model file");
 
-            let mut token_to_id: HashMap<String, usize> = HashMap::new();
-            let mut id_to_token: HashMap<usize, String> = HashMap::new();
+            // read vocab
+            let vocab_file = File::open(vocab_path).expect("can't read vocab file");
+            let vocab_reader = BufReader::new(vocab_file);
 
-            let mut buffer: Vec<u8> = vec![];
-            let mut reading_token = true;
+            let mut vocab_map = VocabMap::new();
 
-            let mut id = 0;
+            for (idx, line) in vocab_reader.lines().enumerate() {
+                let line = line.unwrap();
+                let mut split = line.splitn(2, "\t");
 
-            for byte in vocab {
-                // tab character, now reading score
-                if byte == 09 {
-                    // from_utf8_lossy maybe?
-                    let token = std::str::from_utf8(&buffer).unwrap();
+                let token = split.nth(0).unwrap();
+                let score = split.nth(0).unwrap().parse::<f32>().unwrap();
 
-                    // add to both mappings
-                    token_to_id.insert(token.to_string(), id);
-                    id_to_token.insert(id, token.to_string());
-
-                    id += 1;
-
-                    reading_token = false;
-                    buffer.clear();
-
-                    continue;
-                }
-
-                // newline, now reading next token
-                if byte == 0x0a {
-                    reading_token = true;
-                    buffer.clear();
-
-                    continue;
-                }
-
-                if reading_token {
-                    buffer.push(byte);
-                }
+                vocab_map.add_entry(token.to_string(), (idx, score));
             }
 
-            assert_eq!(token_to_id.len(), id_to_token.len());
-
-            Self {
-                token_to_id,
-                id_to_token,
-            }
+            Self { vocab_map }
         }
     }
 
     impl Tokenizer for SentencePieceTokenizer {
         fn vocab_size(&self) -> usize {
-            self.token_to_id.len()
+            self.vocab_map.tokens.len()
         }
 
         fn tokenize(&self, string: &str) -> Vec<usize> {
